@@ -146,8 +146,12 @@ function boot(){
   scene.environmentIntensity = 0.45;        // 映り込みは控えめ（白がグレーに沈まないように）
 
   // 正投影アイソメ・カメラ（ジオラマらしさ）
-  const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.01,200);
-  const VIEW_DIR = new THREE.Vector3(1, 0.82, -1).normalize(); // 部屋の開口側から見るアイソメ
+  // 透視投影（目線に近い・臨場感のあるアングル）
+  const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 2000);
+  const VIEW_DIR = new THREE.Vector3(1.0, 0.46, -1.0);  // 少し低い位置から部屋を覗き込む（臨場感）
+  const TARGET   = new THREE.Vector3(0, 0.15, 0);        // 注視点（やや上＝室内を見る）
+  let   FIT = 0.72;                                       // 小さいほど寄る
+  let   CAM_DIST = 12;
 
   // ---- ライティング（最終レンダーの温かさに寄せる）----
   const hemi = new THREE.HemisphereLight(0xffffff, 0xddd6c8, 0.75);
@@ -241,15 +245,13 @@ function boot(){
   );
 
   function frameCamera(){
-    const aspect = innerWidth / innerHeight;
-    const fit = 0.95;                       // 余白を残しつつ主役を大きく
-    let halfH = R*fit, halfW = halfH*aspect;
-    if(halfW < R*fit){ halfW = R*fit; halfH = halfW/aspect; }
-    camera.left=-halfW; camera.right=halfW; camera.top=halfH; camera.bottom=-halfH;
-    camera.near = 0.01; camera.far = R*10;
-    camera.position.copy(VIEW_DIR.clone().multiplyScalar(R*3));
-    camera.up.set(0,1,0);
-    camera.lookAt(0,0,0);
+    camera.aspect = innerWidth / innerHeight;
+    camera.near = 0.1; camera.far = R*12 + 50;
+    // 縦横どちらでも収まる距離（モバイル縦でも見切れない）。FIT で寄り具合を調整
+    const vfov = camera.fov * Math.PI/180;
+    const hfov = 2*Math.atan(Math.tan(vfov/2)*camera.aspect);
+    const fitR = R*FIT;
+    CAM_DIST = Math.max(fitR/Math.sin(vfov/2), fitR/Math.sin(hfov/2));
     camera.updateProjectionMatrix();
   }
 
@@ -280,10 +282,11 @@ function boot(){
     // 微視差：カメラをほんの少しだけ振る
     tilt.x += (tilt.tx - tilt.x) * 0.04;
     tilt.y += (tilt.ty - tilt.y) * 0.04;
-    camera.position.copy(VIEW_DIR.clone().multiplyScalar(R*3));
-    camera.position.x += tilt.x * R * 0.10;
-    camera.position.y += -tilt.y * R * 0.06;
-    camera.lookAt(0,0,0);
+    camera.position.copy(VIEW_DIR).normalize().multiplyScalar(CAM_DIST).add(TARGET);
+    camera.position.x += tilt.x * 0.5;
+    camera.position.y += -tilt.y * 0.3;
+    camera.up.set(0,1,0);
+    camera.lookAt(TARGET);
 
     // 照明：ゆっくり揺れる＋わずかな明滅
     if(lampPivot && !reduceMotion){
