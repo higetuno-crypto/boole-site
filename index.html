@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#ffffff" />
+<title>BOOLE</title>
+<meta name="description" content="BOOLE — 大和の小さなヘアサロン。" />
+
+<style>
+  :root{
+    --white:#ffffff;
+    --ink:#16140f;          /* ほぼ黒。少しだけ温かい墨 */
+    --faint:#a7a299;        /* 控えめなグレー文字 */
+    --line:#e7e3da;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    background:var(--white);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Kaku Gothic ProN",
+                "Noto Sans JP", Arial, sans-serif;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+
+  /* 余白のある、ほぼ真っ白な背景。中央がほんの少し明るい */
+  #bg{ position:fixed; inset:0; z-index:0;
+    background:radial-gradient(130% 110% at 50% 38%, #ffffff 0%, #fbfaf8 52%, #f1efe9 100%); }
+
+  canvas#c{ position:fixed; inset:0; z-index:1; display:block; touch-action:none; }
+
+  /* 失敗時のフォールバック（レンダリング画像） */
+  #poster{ position:fixed; inset:0; z-index:1; width:100%; height:100%;
+    object-fit:contain; background:var(--white); display:none; }
+
+  /* ---- 静かなブランド表記（左上） ---- */
+  #mark{ position:fixed; z-index:3; left:clamp(22px,5vw,42px); top:clamp(20px,4.5vw,38px);
+    user-select:none; pointer-events:none; opacity:0; transition:opacity 1.6s ease 0.3s; }
+  #mark .name{ font-size:clamp(17px,4.6vw,21px); font-weight:600; letter-spacing:.5em;
+    line-height:1; padding-left:.5em; color:var(--ink); }
+  #mark .sub{ margin-top:11px; font-size:9.5px; letter-spacing:.42em; text-transform:uppercase;
+    color:var(--faint); }
+
+  /* ---- 隅の最小リンク（右下／下中央） ---- */
+  #foot{ position:fixed; z-index:3; right:clamp(22px,5vw,42px); bottom:clamp(20px,4.5vw,34px);
+    text-align:right; user-select:none; opacity:0; transition:opacity 1.6s ease 0.6s; }
+  #foot a{ display:inline-block; margin-left:26px; font-size:10px; letter-spacing:.28em;
+    text-transform:uppercase; color:var(--faint); text-decoration:none; position:relative;
+    padding-bottom:3px; transition:color .4s ease; }
+  #foot a::after{ content:""; position:absolute; left:0; bottom:0; width:0; height:1px;
+    background:var(--ink); transition:width .45s cubic-bezier(.2,.8,.2,1); }
+  #foot a:hover{ color:var(--ink); }
+  #foot a:hover::after{ width:100%; }
+  #foot .addr{ display:block; margin-top:14px; font-size:10px; letter-spacing:.1em;
+    color:var(--faint); opacity:.8; font-weight:300; }
+
+  /* ---- ローダー ---- */
+  #loader{ position:fixed; inset:0; z-index:9; display:grid; place-items:center;
+    background:var(--white); transition:opacity 1s ease; }
+  #loader.hide{ opacity:0; pointer-events:none; }
+  #loader .l{ font-size:13px; font-weight:600; letter-spacing:.62em; padding-left:.62em;
+    color:var(--ink); opacity:.0; animation:breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{ opacity:.25; } 50%{ opacity:.9; } }
+
+  @media (max-width:560px){
+    #foot{ right:0; left:0; text-align:center; }
+    #foot a{ margin:0 13px; }
+    #mark{ left:0; right:0; text-align:center; }
+    #mark .name{ padding-left:.5em; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    #loader .l{ animation:none; opacity:.7; }
+  }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <canvas id="c"></canvas>
+  <img id="poster" src="./assets/poster.jpg" alt="BOOLE" />
+
+  <div id="mark">
+    <div class="name">BOOLE</div>
+    <div class="sub">Hair Salon &middot; Yamato</div>
+  </div>
+
+  <nav id="foot">
+    <a href="https://www.instagram.com/boole___/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://beauty.hotpepper.jp/slnH000429621/" target="_blank" rel="noopener">Reserve</a>
+    <span class="addr">大和市中央 1-4-17 第22アルカディアビル B1F</span>
+  </nav>
+
+  <div id="loader"><span class="l">BOOLE</span></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = (s)=>document.querySelector(s);
+const loaderEl = $('#loader');
+const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* フォールバック（描けない端末はレンダリング画像を見せる） */
+function fallback(){
+  $('#poster').style.display='block';
+  $('#c').style.display='none';
+  loaderEl.classList.add('hide');
+  reveal();
+}
+function reveal(){ $('#mark').style.opacity='1'; $('#foot').style.opacity='1'; }
+
+let ok = false;
+try {
+  if(!window.WebGLRenderingContext) throw new Error('no webgl');
+  boot();
+  ok = true;
+} catch(e){ console.error(e); fallback(); }
+addEventListener('error', (e)=>{ if(!ok) fallback(); });
+
+/* ===================================================================== */
+function boot(){
+  const canvas = $('#c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.AgXToneMapping;
+  renderer.toneMappingExposure = 1.34;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+
+  // やわらかいスタジオ環境（PBR の映り込み用）
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.45;        // 映り込みは控えめ（白がグレーに沈まないように）
+
+  // 正投影アイソメ・カメラ（ジオラマらしさ）
+  const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.01,200);
+  const VIEW_DIR = new THREE.Vector3(1, 0.82, -1).normalize(); // 部屋の開口側から見るアイソメ
+
+  // ---- ライティング（最終レンダーの温かさに寄せる）----
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xddd6c8, 0.75);
+  scene.add(hemi);
+  const key = new THREE.DirectionalLight(0xfff1df, 2.3);   // 暖色キー
+  key.position.set(6, 9, 7);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.bias = -0.0004;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xe6efff, 0.5);  // 寒色フィル
+  fill.position.set(-7, 4, -4);
+  scene.add(fill);
+  const amb = new THREE.AmbientLight(0xffffff, 0.22);
+  scene.add(amb);
+
+  /* ---- 黒板チョーク・ループ ---- */
+  const chalk = makeChalkBoard();
+
+  /* ---- カウンターのグレージュ縦木目（GLBに焼かれていないので手続き生成）---- */
+  const woodTex = makeWoodTexture();
+
+  let lampPivot = null, bulbMat = null, lampBaseRot = 0;
+  let R = 1, center = new THREE.Vector3();
+
+  let boardMesh = null;
+  const loader = new GLTFLoader();
+  loader.load('./assets/diorama.glb',
+    (gltf)=>{
+      const model = gltf.scene;
+      model.traverse(o=>{
+        if(!o.isMesh) return;
+        o.castShadow = true; o.receiveShadow = true;
+        const m = o.material;
+        const mn = (m && m.name) || '';
+        // ロゴ枠(Logo_Decal)は黒板の一部しか覆わない → 使わず隠す（黒板全面に合わせた面を後で作る）
+        if(mn === 'M_LogoDecal' || /Logo_Decal/i.test(o.name)){
+          o.visible = false;
+        }
+        // 黒板はテクスチャ未収録 → 設計トークンの暗い緑黒を手で与える（映り込みも抑える）
+        if(mn === 'M_Chalkboard'){ m.color.setHex(0x2c3830); m.roughness = 0.98; m.metalness = 0; m.envMapIntensity = 0.10; boardMesh = o; }
+        if(mn === 'M_Wall'){ m.envMapIntensity = 0.5; }
+        if(mn === 'M_Floor'){ m.color.setHex(0xf7f6f3); m.envMapIntensity = 0.35; }
+        // カウンター本体 → 明るいグレージュ縦木目（天板 M_CounterTop は白のまま）
+        if(mn === 'M_Counter'){ m.map = woodTex; m.color.setHex(0xffffff); m.roughness = 0.45; m.needsUpdate = true; }
+        // 発光（土台の光のライン・電球）を少し持ち上げる
+        if(m && m.emissive && (m.emissiveIntensity !== undefined)){
+          if(mn === 'M_Glow') m.emissiveIntensity = 3.0;
+          if(mn === 'M_LampBulb'){ m.emissiveIntensity = 2.2; bulbMat = m; }
+        }
+      });
+
+      // 中心へ寄せる
+      const box = new THREE.Box3().setFromObject(model);
+      const sph = box.getBoundingSphere(new THREE.Sphere());
+      center.copy(sph.center); R = sph.radius;
+      model.position.sub(center);
+      scene.add(model);
+      model.updateMatrixWorld(true);
+
+      // 黒板オブジェクトの全面に合わせたチョーク面を作る（ロゴはこの黒板基準で配置される）
+      if(boardMesh){
+        const bb = new THREE.Box3().setFromObject(boardMesh);
+        const bw = bb.max.z - bb.min.z;      // 黒板の幅（Z方向）
+        const bh = bb.max.y - bb.min.y;      // 黒板の高さ（Y方向）
+        const planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(bw, bh), chalk.material);
+        planeMesh.rotation.y = Math.PI / 2;  // 法線を +X（室内側）へ
+        planeMesh.position.set(bb.max.x + 0.02, (bb.max.y + bb.min.y) / 2, (bb.max.z + bb.min.z) / 2);
+        planeMesh.renderOrder = 3;
+        scene.add(planeMesh);
+      }
+
+      frameCamera();
+
+      // キーライトの影カメラをモデルに合わせる
+      const s = key.shadow.camera;
+      s.left=-R; s.right=R; s.top=R; s.bottom=-R; s.near=0.1; s.far=R*6;
+      s.updateProjectionMatrix();
+
+      // ランプ（ゆっくり揺れる照明）
+      lampPivot = model.getObjectByName('Lamp');
+      if(lampPivot) lampBaseRot = lampPivot.rotation.z;
+
+      loaderEl.classList.add('hide');
+      reveal();
+      chalk.start();
+      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) chalk.resume(); });
+    },
+    undefined,
+    (err)=>{ console.error(err); fallback(); }
+  );
+
+  function frameCamera(){
+    const aspect = innerWidth / innerHeight;
+    const fit = 0.95;                       // 余白を残しつつ主役を大きく
+    let halfH = R*fit, halfW = halfH*aspect;
+    if(halfW < R*fit){ halfW = R*fit; halfH = halfW/aspect; }
+    camera.left=-halfW; camera.right=halfW; camera.top=halfH; camera.bottom=-halfH;
+    camera.near = 0.01; camera.far = R*10;
+    camera.position.copy(VIEW_DIR.clone().multiplyScalar(R*3));
+    camera.up.set(0,1,0);
+    camera.lookAt(0,0,0);
+    camera.updateProjectionMatrix();
+  }
+
+  // ---- ごく僅かな視差（「誰かが居る」気配。静止に近い）----
+  const tilt = { x:0, y:0, tx:0, ty:0 };
+  if(!reduceMotion){
+    addEventListener('pointermove', (e)=>{
+      tilt.tx = (e.clientX/innerWidth  - 0.5) * 2;
+      tilt.ty = (e.clientY/innerHeight - 0.5) * 2;
+    }, { passive:true });
+    addEventListener('deviceorientation', (e)=>{
+      if(e.gamma==null) return;
+      tilt.tx = Math.max(-1,Math.min(1, e.gamma/24));
+      tilt.ty = Math.max(-1,Math.min(1, ((e.beta||40)-40)/24));
+    }, { passive:true });
+  }
+
+  addEventListener('resize', ()=>{
+    renderer.setSize(innerWidth, innerHeight);
+    frameCamera();
+  });
+
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(()=>{
+    const t = clock.getElapsedTime();
+    const dt = clock.getDelta ? 0 : 0; // (getDelta は使わず getElapsedTime で進める)
+
+    // 微視差：カメラをほんの少しだけ振る
+    tilt.x += (tilt.tx - tilt.x) * 0.04;
+    tilt.y += (tilt.ty - tilt.y) * 0.04;
+    camera.position.copy(VIEW_DIR.clone().multiplyScalar(R*3));
+    camera.position.x += tilt.x * R * 0.10;
+    camera.position.y += -tilt.y * R * 0.06;
+    camera.lookAt(0,0,0);
+
+    // 照明：ゆっくり揺れる＋わずかな明滅
+    if(lampPivot && !reduceMotion){
+      lampPivot.rotation.z = lampBaseRot + Math.sin(t*0.6)*0.02;
+    }
+    if(bulbMat && !reduceMotion){
+      bulbMat.emissiveIntensity = 2.2 + Math.sin(t*2.3)*0.12 + Math.sin(t*7.1)*0.05;
+    }
+
+    chalk.update(performance.now());
+    renderer.render(scene, camera);
+  });
+
+  // verify 用フック
+  window.__three = { renderer, scene, camera, get R(){return R;}, get dir(){return VIEW_DIR;} };
+}
+
+/* =====================================================================
+   黒板チョーク・ループ
+   ・黒板オブジェクトの縦横比(5:3.2＝1.5625)に合わせた canvas をテクスチャ化
+   ・各ロゴは「ルミナンス→アルファ」でチョーク色に変換（黒背景は完全に透過）
+   ・_logo_preview を必ず最初に、その後はランダム
+   ・フェードイン → 数秒保持 → 雑に拭き消す → 次へ
+   ===================================================================== */
+/* =====================================================================
+   カウンターのグレージュ縦木目テクスチャ（手続き生成）
+   Blenderの Noise+Wave(BANDS)→低コントラスト暖灰 を canvas で近似
+   ===================================================================== */
+function makeWoodTexture(){
+  function hash(x,y){ const s=Math.sin(x*127.1+y*311.7)*43758.5453; return s-Math.floor(s); }
+  function vnoise(x,y){
+    const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+    const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);
+    const u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf);
+    return a*(1-u)*(1-v)+b*u*(1-v)+c*(1-u)*v+d*u*v;
+  }
+  const W=256, H=512;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const g=cv.getContext('2d'), id=g.createImageData(W,H), d=id.data;
+  const base=[205,197,184];                 // 明るいグレージュ
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const warp = Math.sin(y*0.012)*6 + (vnoise(x*0.03,y*0.05)-0.5)*12;
+    const xx = x+warp;
+    const grain = Math.sin(xx*0.20)*0.5 + Math.sin(xx*0.085+2)*0.3 + Math.sin(xx*0.6)*0.2; // 縦の木筋
+    const fine  = (vnoise(x*0.22,y*0.10)-0.5)*0.55 + (vnoise(x*0.8,y*0.35)-0.5)*0.3;
+    const streak = (vnoise(x*0.018,0)<0.10) ? -12 : 0;   // たまの濃い木筋
+    const v = grain*13 + fine*9 + streak;
+    const i=(y*W+x)*4;
+    d[i]  =Math.max(0,Math.min(255,base[0]+v));
+    d[i+1]=Math.max(0,Math.min(255,base[1]+v));
+    d[i+2]=Math.max(0,Math.min(255,base[2]+v));
+    d[i+3]=255;
+  }
+  g.putImageData(id,0,0);
+  const tex=new THREE.CanvasTexture(cv);
+  tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=8;
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(2,2);
+  return tex;
+}
+
+function makeChalkBoard(){
+  const W = 1100, H = 704;                  // 黒板の縦横比に一致（歪みなし）
+  const CHALK = [245, 240, 232];           // --color-chalk
+  const board = document.createElement('canvas'); board.width=W; board.height=H;
+  const ctx = board.getContext('2d');
+
+  const texture = new THREE.CanvasTexture(board);
+  texture.flipY = true;                    // three標準の PlaneGeometry UV に合わせる
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+
+  const material = new THREE.MeshBasicMaterial({
+    map: texture, transparent:true, depthWrite:false, toneMapped:false,
+    polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2,
+  });
+
+  const SRC = [
+    './assets/logos/00_preview.jpg',       // 本物ロゴ（必ず最初）
+    './assets/logos/01_design.jpg',
+    './assets/logos/02_arai.jpg',
+    './assets/logos/03_hoso.jpg',
+    './assets/logos/04_hosohaji.jpg',
+    './assets/logos/05_huto.jpg',
+    './assets/logos/06_huto2.jpg',
+  ];
+  // ロゴごとの表示サイズ（1枚ずつ違う大きさに）
+  //  fill = 黒板に対する占有率（contain＝縦横比そのまま）
+  //  mode:'cover' = 画像をそのまま黒板いっぱいに敷く（隅書きはそのまま隅へ）
+  //  ※ fill は「黒板に対する文字の占有率」（チョーク実体基準）。中央配置
+  const LAYOUT = [
+    { fill:0.84 },                     // 00 本物 Welcome BOOLE（主役・大）
+    { fill:0.50 },                     // 01 design（小さめ）
+    { fill:0.82 },                     // 02 arai（黒板中央・82%）
+    { fill:0.45 },                     // 03 hoso（細い・小さい）
+    { mode:'cover', align:'bottom', boost:2.2 },  // 04 hosohaji（隅書きのまま黒板いっぱい）
+    { fill:0.78 },                     // 05 huto（太い・特大）
+    { fill:0.58 },                     // 06 huto2（太い・中）
+  ];
+  // 各ロゴを「チョーク化」した canvas をキャッシュ
+  const logos = SRC.map(()=>({ ready:false, canvas:null }));
+
+  function processLogo(img, slot, cfg){
+    const iw = img.width, ih = img.height;
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    const tg = tmp.getContext('2d');
+
+    if(cfg.mode === 'cover'){
+      // 画像はそのまま（拡大せず）黒板いっぱいに敷く。隅書きはそのまま隅へ
+      const scale = Math.max(W/iw, H/ih);
+      const dw = iw*scale, dh = ih*scale;
+      const dx = (W-dw)/2;
+      const dy = (cfg.align==='bottom') ? (H-dh) : (cfg.align==='top') ? 0 : (H-dh)/2;
+      tg.drawImage(img, dx, dy, dw, dh);
+    } else {
+      // チョーク（明るい部分）の実体だけを切り出し、その大きさ(fill)＝黒板に対する占有率で中央配置
+      const wc=document.createElement('canvas'); wc.width=iw; wc.height=ih;
+      const wg=wc.getContext('2d'); wg.drawImage(img,0,0);
+      const wd=wg.getImageData(0,0,iw,ih).data;
+      let minX=iw, minY=ih, maxX=0, maxY=0, found=false;
+      for(let y=0;y<ih;y++) for(let x=0;x<iw;x++){
+        const i=(y*iw+x)*4;
+        const lum=wd[i]*0.299+wd[i+1]*0.587+wd[i+2]*0.114;
+        if(lum>105){ found=true;   // 明るい文字部分だけで範囲を取る（薄い飛び散りは無視）
+          if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; }
+      }
+      if(!found){ minX=0; minY=0; maxX=iw-1; maxY=ih-1; }
+      const cw=maxX-minX+1, ch=maxY-minY+1;
+      const fill=cfg.fill;
+      const scale=Math.min((W*fill)/cw, (H*fill)/ch);
+      const dw=cw*scale, dh=ch*scale;
+      const dx=(W-dw)/2 + (cfg.dx||0)*W, dy=(H-dh)/2 + (cfg.dy||0)*H;
+      tg.drawImage(img, minX,minY,cw,ch, dx,dy,dw,dh);
+    }
+
+    const id = tg.getImageData(0,0,W,H);
+    const d = id.data;
+    for(let i=0;i<d.length;i+=4){
+      // 輝度 → チョークの濃さ（黒背景は 0 に潰す）
+      const lum = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114);
+      let a = (lum - 34) / (255 - 34);
+      a = a<=0 ? 0 : Math.pow(Math.min(1,a), 0.82);
+      if(cfg.boost) a = Math.min(1, a*cfg.boost);   // 薄いチョークを持ち上げる
+      d[i]   = CHALK[0];
+      d[i+1] = CHALK[1];
+      d[i+2] = CHALK[2];
+      d[i+3] = Math.round(a*255);
+    }
+    const c = document.createElement('canvas'); c.width=W; c.height=H;
+    c.getContext('2d').putImageData(id,0,0);
+    slot.canvas = c; slot.ready = true;
+  }
+
+  // 読み込み（preview を最優先、残りは順次）
+  SRC.forEach((src,i)=>{
+    const img = new Image();
+    img.onload = ()=>processLogo(img, logos[i], LAYOUT[i]);
+    img.src = src;
+  });
+
+  // 雑に拭き消すマスク（毎回ランダムに作る）
+  function makeWipe(){
+    const dir = Math.random()<0.5 ? 1 : -1;     // 左右どちらから拭くか
+    const bands = 5 + (Math.random()*3|0);
+    const seeds = [];
+    for(let b=0;b<bands;b++){
+      seeds.push({ y:(b+0.5)/bands*H + (Math.random()-0.5)*40,
+                   h:H/bands*(1.5+Math.random()*0.8),
+                   off:(Math.random()-0.5)*0.25,
+                   sp:0.85+Math.random()*0.3 });
+    }
+    return { dir, seeds };
+  }
+
+  // 端から引っ掻いて「書いていく」ように現れるマスク（毎回ランダム＝現れ方もレパートリー）
+  function makeReveal(){
+    const modes = ['lr','lr','lr','rl','tb'];     // 左→右(書き順)を多めに
+    const dir = modes[(Math.random()*modes.length)|0];
+    const nb = 11 + (Math.random()*7|0);          // バンド多め＝前線がギザギザ
+    const seeds = [];
+    for(let b=0;b<nb;b++){
+      seeds.push({ jitter:(Math.random()-0.5)*0.22, ahead:(Math.random()-0.3)*0.10 });
+    }
+    // 前線付近を引っ掻く短いストローク
+    const scratches = [];
+    const n = 18 + (Math.random()*14|0);
+    for(let i=0;i<n;i++){
+      scratches.push({ at:Math.random(), off:(Math.random()-0.5),
+                       len:14+Math.random()*46, a:0.30+Math.random()*0.45, w:1.5+Math.random()*3 });
+    }
+    return { dir, seeds, scratches };
+  }
+
+  // 状態機械
+  const REVEAL=2100, HOLD=reduceMotion?4000:5800, WIPE=1100, GAP=520;
+  let queueFirst = true;     // 最初は preview 固定
+  let cur = -1;
+  let phase = 'idle', t0 = 0, wipe = null, reveal = null;
+  const ease = (x)=> x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+
+  function pickNext(){
+    if(queueFirst && logos[0].ready){ queueFirst=false; return 0; }
+    // 準備済みからランダム（直前と違うもの）
+    const avail = logos.map((l,i)=>l.ready?i:-1).filter(i=>i>=0 && i!==cur);
+    if(avail.length===0) return logos[0].ready ? 0 : -1;
+    return avail[(Math.random()*avail.length)|0];
+  }
+
+  function drawChalk(alpha, eraseProg){
+    ctx.clearRect(0,0,W,H);
+    const slot = logos[cur];
+    if(!slot || !slot.canvas) return;
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(slot.canvas, 0, 0);
+    ctx.globalAlpha = 1;
+
+    if(eraseProg > 0 && wipe){
+      // destination-out で雑に拭く（むらを残す）
+      ctx.globalCompositeOperation = 'destination-out';
+      const reach = eraseProg; // 0..1
+      for(const s of wipe.seeds){
+        const sweep = reach * s.sp + s.off;
+        const x = wipe.dir>0 ? (sweep*W*1.3) : (W - sweep*W*1.3);
+        const grad = ctx.createLinearGradient(
+          x - wipe.dir*220, 0, x + wipe.dir*40, 0);
+        grad.addColorStop(0, 'rgba(0,0,0,0.95)');
+        grad.addColorStop(0.7, 'rgba(0,0,0,0.55)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, s.y - s.h/2, W, s.h);
+      }
+      // 仕上げに全体をうっすら消し残りなく
+      if(reach > 0.82){
+        ctx.globalAlpha = (reach-0.82)/0.18;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0,0,W,H);
+        ctx.globalAlpha = 1;
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    texture.needsUpdate = true;
+  }
+
+  // 端から引っ掻いて書いていくように現れる（ラフな前線＋引っ掻きストローク）
+  function drawReveal(rev, p){
+    ctx.clearRect(0,0,W,H);
+    const slot = logos[cur];
+    if(!slot || !slot.canvas){ texture.needsUpdate=true; return; }
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha=1;
+    ctx.drawImage(slot.canvas, 0, 0);
+
+    const horiz = (rev.dir==='lr' || rev.dir==='rl');
+    const feather = horiz ? 160 : 100;
+    const over = 0.18;
+
+    if(p < 0.92){                                   // 仕上げ際は消去オフ→きれいに全部出る
+      ctx.globalCompositeOperation='destination-out';
+      const nb = rev.seeds.length;
+      for(let b=0;b<nb;b++){
+        const s = rev.seeds[b];
+        // 各バンドの前線(0..1)。ジッタは進むほど収束＝最後はきれいに揃う
+        let f = p*(1+over) + s.ahead + s.jitter*(1-p);
+        f = Math.max(0, Math.min(1.3, f));
+        if(horiz){
+          const by=(b/nb)*H, bh=(1/nb)*H + 1.5;
+          if(rev.dir==='lr'){
+            const x=f*W;
+            const g=ctx.createLinearGradient(x-feather,0,x+feather*0.25,0);
+            g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,1)');
+            ctx.fillStyle=g; ctx.fillRect(x-feather, by, W-(x-feather), bh);
+          } else {
+            const x=W-f*W;
+            const g=ctx.createLinearGradient(x+feather,0,x-feather*0.25,0);
+            g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,1)');
+            ctx.fillStyle=g; ctx.fillRect(0, by, x+feather, bh);
+          }
+        } else {                                    // 上→下
+          const bx=(b/nb)*W, bw=(1/nb)*W + 1.5;
+          const y=f*H;
+          const g=ctx.createLinearGradient(0,y-feather,0,y+feather*0.25);
+          g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,1)');
+          ctx.fillStyle=g; ctx.fillRect(bx, y-feather, bw, H-(y-feather));
+        }
+      }
+      // 前線付近を細かく引っ掻く（チョークを少し削って質感）
+      const sFade = p<0.12 ? p/0.12 : (p>0.8 ? Math.max(0,(0.95-p)/0.15) : 1);
+      if(sFade > 0){
+        const frontPos = (rev.dir==='rl') ? (1-p) : p;
+        ctx.lineCap='round';
+        for(const sc of rev.scratches){
+          ctx.strokeStyle='rgba(0,0,0,'+(sc.a*sFade)+')';
+          ctx.lineWidth=sc.w;
+          ctx.beginPath();
+          if(horiz){
+            const x=frontPos*W + sc.off*80, y=sc.at*H;
+            ctx.moveTo(x, y-sc.len/2); ctx.lineTo(x+sc.off*40, y+sc.len/2);
+          } else {
+            const y=frontPos*H + sc.off*80, x=sc.at*W;
+            ctx.moveTo(x-sc.len/2, y); ctx.lineTo(x+sc.len/2, y+sc.off*40);
+          }
+          ctx.stroke();
+        }
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
+    texture.needsUpdate=true;
+  }
+
+  function start(){ phase='reveal'; t0=performance.now(); cur=pickNext();
+    if(cur<0){ phase='wait'; } else { wipe=null; reveal=null; } }
+
+  function update(now){
+    if(phase==='idle') return;
+    if(phase==='wait'){ cur=pickNext(); if(cur>=0){ phase='reveal'; reveal=null; t0=now; } return; }
+    const e = now - t0;
+    if(phase==='reveal'){
+      if(!reveal) reveal=makeReveal();
+      const p = Math.min(1, e/REVEAL);
+      drawReveal(reveal, 1 - Math.pow(1-p, 1.5));   // 端から書いていく（やや早→落ち着く）
+      if(p>=1){ phase='hold'; t0=now; reveal=null; }
+    } else if(phase==='hold'){
+      if(e >= HOLD){ phase='wipe'; t0=now; wipe=makeWipe(); }
+    } else if(phase==='wipe'){
+      const p = Math.min(1, e/WIPE);
+      drawChalk(1, ease(p));
+      if(p>=1){ ctx.clearRect(0,0,W,H); texture.needsUpdate=true; phase='gap'; t0=now; }
+    } else if(phase==='gap'){
+      if(e >= GAP){ cur=pickNext(); phase = cur>=0 ? 'reveal' : 'wait'; if(phase==='reveal') reveal=null; t0=now; }
+    }
+  }
+
+  // タブから戻ったとき（rAF が止まっていた）に現在の局面を仕切り直す
+  function resume(){ if(phase!=='idle' && phase!=='wait') t0 = performance.now(); }
+
+  return { material, texture, start, update, resume };
+}
+</script>
+</body>
+</html>
