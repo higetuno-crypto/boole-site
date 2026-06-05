@@ -104,10 +104,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (s)=>document.querySelector(s);
 const loaderEl = $('#loader');
 const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const TUNE = new URLSearchParams(location.search).has('tune'); // ?tune でカメラ自由調整モード
 
 /* フォールバック（描けない端末はレンダリング画像を見せる） */
 function fallback(){
@@ -176,6 +178,7 @@ function boot(){
 
   let lampPivot = null, bulbMat = null, lampBaseRot = 0;
   let R = 1, center = new THREE.Vector3();
+  let controls = null, updateHud = null;     // ?tune モード用
 
   let boardMesh = null;
   const loader = new GLTFLoader();
@@ -225,6 +228,37 @@ function boot(){
       }
 
       frameCamera();
+
+      // ?tune：指/マウスで自由にカメラを動かして角度を探すモード
+      if(TUNE){
+        // 調整中は文字・リンクを隠してクリーンに
+        $('#mark').style.display='none'; $('#foot').style.display='none';
+        camera.position.copy(VIEW_DIR).normalize().multiplyScalar(CAM_DIST).add(TARGET);
+        camera.lookAt(TARGET);
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.copy(TARGET);
+        controls.enableDamping = true; controls.dampingFactor = 0.08;
+        controls.enablePan = true; controls.minDistance = 3.5; controls.maxDistance = 70;
+        controls.update();
+
+        const hud = document.createElement('div');
+        hud.style.cssText = 'position:fixed;left:12px;top:12px;z-index:8;'
+          + 'font:600 12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;'
+          + 'background:rgba(255,255,255,.93);color:#16140f;padding:9px 12px;border-radius:9px;'
+          + 'box-shadow:0 3px 16px rgba(0,0,0,.16);white-space:pre;pointer-events:none;letter-spacing:.02em;';
+        document.body.appendChild(hud);
+        const f = (n)=> (n>=0?' ':'') + n.toFixed(2);
+        updateHud = ()=>{
+          const p=camera.position, t=controls.target, d=p.clone().sub(t).normalize();
+          hud.textContent =
+            'ドラッグ=回転 / 2本指=ズーム・移動\n'
+          + 'いい角度でスクショして送ってね\n\n'
+          + 'dir    ' + f(d.x)+','+f(d.y)+','+f(d.z) + '\n'
+          + 'target ' + f(t.x)+','+f(t.y)+','+f(t.z) + '\n'
+          + 'dist   ' + f(p.distanceTo(t)) + '    fov ' + (camera.fov|0);
+        };
+        updateHud();
+      }
 
       // キーライトの影カメラをモデルに合わせる
       const s = key.shadow.camera;
@@ -279,14 +313,20 @@ function boot(){
     const t = clock.getElapsedTime();
     const dt = clock.getDelta ? 0 : 0; // (getDelta は使わず getElapsedTime で進める)
 
-    // 微視差：カメラをほんの少しだけ振る
-    tilt.x += (tilt.tx - tilt.x) * 0.04;
-    tilt.y += (tilt.ty - tilt.y) * 0.04;
-    camera.position.copy(VIEW_DIR).normalize().multiplyScalar(CAM_DIST).add(TARGET);
-    camera.position.x += tilt.x * 0.5;
-    camera.position.y += -tilt.y * 0.3;
-    camera.up.set(0,1,0);
-    camera.lookAt(TARGET);
+    if(TUNE){
+      // 自由カメラ（指/マウス操作）。数値は画面左下に表示
+      if(controls) controls.update();
+      if(updateHud) updateHud();
+    } else {
+      // 微視差：カメラをほんの少しだけ振る
+      tilt.x += (tilt.tx - tilt.x) * 0.04;
+      tilt.y += (tilt.ty - tilt.y) * 0.04;
+      camera.position.copy(VIEW_DIR).normalize().multiplyScalar(CAM_DIST).add(TARGET);
+      camera.position.x += tilt.x * 0.5;
+      camera.position.y += -tilt.y * 0.3;
+      camera.up.set(0,1,0);
+      camera.lookAt(TARGET);
+    }
 
     // 照明：ゆっくり揺れる＋わずかな明滅
     if(lampPivot && !reduceMotion){
