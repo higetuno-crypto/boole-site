@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>boole ｜ 大和市中央のヘアサロン</title>
+<meta name="description" content="神奈川県大和市中央のヘアサロン boole（ブール）。大和駅から徒歩3分。髪と静かに向き合う時間を。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Shippori+Mincho+B1:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C1814;
+    --ink-soft:#2A241E;
+    --paper:#F4EFE7;
+    --paper-deep:#EAE2D5;
+    --brass:#9C7E4F;
+    --brass-lt:#C4A877;
+    --stone:#7A7065;
+    --line:rgba(28,24,20,.14);
+    --line-lt:rgba(244,239,231,.18);
+    --serif:"Cormorant Garamond",serif;
+    --mincho:"Shippori Mincho B1",serif;
+    --sans:"Zen Kaku Gothic New",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-weight:300;
+    line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* film grain overlay */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--brass);color:var(--paper)}
+
+  /* ---------- NAV ---------- */
+  header{
+    position:fixed;top:0;left:0;width:100%;z-index:100;
+    padding:26px clamp(20px,5vw,64px);
+    display:flex;justify-content:space-between;align-items:center;
+    transition:background .6s ease,padding .6s ease,backdrop-filter .6s ease;
+    mix-blend-mode:difference;color:#fff;
+  }
+  header.solid{
+    mix-blend-mode:normal;color:var(--ink);
+    background:rgba(244,239,231,.82);backdrop-filter:blur(14px);
+    padding:16px clamp(20px,5vw,64px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{font-family:var(--serif);font-size:26px;letter-spacing:.32em;font-weight:400;text-indent:.32em;}
+  nav ul{display:flex;gap:clamp(18px,2.4vw,40px);list-style:none;align-items:center}
+  nav a{font-size:11px;letter-spacing:.22em;text-transform:uppercase;position:relative;padding:4px 0}
+  nav a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:1px;background:currentColor;transition:width .45s ease}
+  nav a:hover::after{width:100%}
+  .nav-reserve{border:1px solid currentColor;padding:9px 20px;border-radius:40px;font-size:10px}
+  .nav-reserve::after{display:none}
+  .burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:0}
+  .burger span{width:24px;height:1px;background:currentColor;display:block;transition:.4s}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:100vh;background:var(--ink);color:var(--paper);
+    position:relative;display:flex;align-items:center;
+    padding:0 clamp(20px,5vw,64px);overflow:hidden;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(120% 80% at 80% 10%,rgba(196,168,119,.16),transparent 55%),
+      radial-gradient(90% 60% at 0% 100%,rgba(156,126,79,.12),transparent 60%);
+  }
+  .hero-grid{
+    position:relative;width:100%;display:grid;
+    grid-template-columns:1fr auto;gap:40px;align-items:center;
+  }
+  .hero-label{font-size:11px;letter-spacing:.4em;color:var(--brass-lt);margin-bottom:34px;opacity:0}
+  .hero h1{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(88px,20vw,260px);line-height:.84;letter-spacing:.02em;
+    margin-bottom:30px;
+  }
+  .hero h1 .ch{display:inline-block;opacity:0;transform:translateY(40px)}
+  .hero-sub{font-family:var(--mincho);font-size:clamp(16px,2vw,22px);letter-spacing:.18em;color:rgba(244,239,231,.82);opacity:0}
+  .hero-en{margin-top:18px;font-size:11px;letter-spacing:.45em;color:var(--brass-lt);opacity:0}
+  .hero-vert{
+    writing-mode:vertical-rl;font-family:var(--mincho);font-size:14px;letter-spacing:.5em;
+    color:rgba(244,239,231,.55);height:340px;align-self:center;opacity:0;
+    border-left:1px solid var(--line-lt);padding-left:28px;
+  }
+  .scroll-cue{position:absolute;bottom:34px;left:clamp(20px,5vw,64px);font-size:10px;letter-spacing:.3em;color:var(--brass-lt);display:flex;align-items:center;gap:14px}
+  .scroll-cue .ln{width:60px;height:1px;background:var(--brass);transform-origin:left;animation:cue 2.6s ease-in-out infinite}
+  @keyframes cue{0%,100%{transform:scaleX(.3);opacity:.4}50%{transform:scaleX(1);opacity:1}}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(46px);transition:opacity 1.1s cubic-bezier(.16,1,.3,1),transform 1.1s cubic-bezier(.16,1,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:clamp(90px,13vw,180px) clamp(20px,5vw,64px);position:relative}
+  .eyebrow{display:flex;align-items:center;gap:18px;font-size:11px;letter-spacing:.34em;color:var(--brass);text-transform:uppercase;margin-bottom:34px}
+  .eyebrow .num{font-family:var(--serif);font-size:15px}
+  .eyebrow .bar{flex:0 0 46px;height:1px;background:var(--brass)}
+  h2.sec{font-family:var(--mincho);font-weight:500;font-size:clamp(28px,4.6vw,52px);line-height:1.4;letter-spacing:.04em;margin-bottom:34px}
+  h2.sec .en{display:block;font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(20px,2.6vw,30px);color:var(--brass);letter-spacing:.02em;margin-top:8px}
+
+  /* ---------- CONCEPT ---------- */
+  .concept{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(40px,8vw,110px);align-items:center}
+  .concept-text p{color:var(--ink-soft);max-width:46ch;margin-bottom:24px;font-size:15px}
+  .concept-text .lead{font-family:var(--mincho);font-size:clamp(20px,2.6vw,28px);line-height:1.9;color:var(--ink);margin-bottom:32px;font-weight:400}
+  .concept-visual{position:relative;aspect-ratio:3/4}
+  .frame{position:absolute;inset:0;background:linear-gradient(150deg,#3a322a,#1c1814 70%);overflow:hidden}
+  .frame::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 70% at 30% 20%,rgba(196,168,119,.22),transparent 60%)}
+  .frame .vlabel{position:absolute;right:22px;top:26px;writing-mode:vertical-rl;font-family:var(--mincho);color:rgba(244,239,231,.7);letter-spacing:.4em;font-size:13px}
+  .frame .mark{position:absolute;left:26px;bottom:24px;font-family:var(--serif);font-style:italic;color:var(--brass-lt);font-size:22px;letter-spacing:.1em}
+  .concept-visual .tag{position:absolute;right:-14px;bottom:34px;background:var(--paper);border:1px solid var(--line);padding:14px 18px;font-family:var(--serif);font-size:13px;letter-spacing:.2em}
+
+  /* ---------- MENU ---------- */
+  .menu-sec{background:var(--paper-deep)}
+  .menu-list{display:grid;gap:0;margin-top:10px}
+  .menu-row{
+    display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:baseline;
+    padding:30px 6px;border-top:1px solid var(--line);transition:padding-left .5s ease,background .5s ease;
+  }
+  .menu-row:last-child{border-bottom:1px solid var(--line)}
+  .menu-row:hover{padding-left:22px;background:rgba(156,126,79,.05)}
+  .menu-row .idx{font-family:var(--serif);color:var(--brass);font-size:15px}
+  .menu-row .name{font-family:var(--mincho);font-size:clamp(18px,2.4vw,24px);font-weight:500}
+  .menu-row .name small{display:block;font-family:var(--sans);font-size:12px;color:var(--stone);letter-spacing:.12em;margin-top:6px;font-weight:300}
+  .menu-row .price{font-family:var(--serif);font-size:clamp(20px,2.6vw,26px);white-space:nowrap}
+  .menu-row .price span{font-size:13px;color:var(--stone);margin-left:2px}
+  .menu-note{margin-top:26px;font-size:12px;color:var(--stone);letter-spacing:.08em}
+
+  /* ---------- STYLIST ---------- */
+  .stylist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,3vw,46px);margin-top:14px}
+  .stylist{}
+  .stylist .ph{aspect-ratio:4/5;background:linear-gradient(160deg,#cdbfa8,#9f8e74);position:relative;overflow:hidden;margin-bottom:22px}
+  .stylist .ph::after{content:"";position:absolute;inset:0;background:radial-gradient(80% 70% at 40% 20%,rgba(255,255,255,.25),transparent 55%)}
+  .stylist:nth-child(2) .ph{background:linear-gradient(160deg,#b9a98f,#827760)}
+  .stylist:nth-child(3) .ph{background:linear-gradient(160deg,#c7b8a0,#8d7c64)}
+  .stylist .role{font-size:11px;letter-spacing:.26em;color:var(--brass);text-transform:uppercase;margin-bottom:8px}
+  .stylist .nm{font-family:var(--mincho);font-size:22px;font-weight:500;margin-bottom:4px}
+  .stylist .nm .en{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--stone);margin-left:10px}
+  .stylist p{font-size:13px;color:var(--stone);margin-top:12px;max-width:34ch}
+
+  /* ---------- GALLERY ---------- */
+  .gallery-sec{background:var(--ink);color:var(--paper)}
+  .gallery-sec .eyebrow{color:var(--brass-lt)}
+  .gallery-sec .eyebrow .bar{background:var(--brass-lt)}
+  .gallery-sec h2.sec{color:var(--paper)}
+  .gallery-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:120px;gap:14px;margin-top:14px}
+  .gtile{position:relative;overflow:hidden;background:#2a241e}
+  .gtile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .gtile::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(140deg,rgba(196,168,119,.14),transparent 45%),linear-gradient(0deg,rgba(28,24,20,.45),transparent 40%)}
+  .gtile::after{content:attr(data-l);position:absolute;z-index:2;left:16px;bottom:14px;font-family:var(--serif);font-style:italic;color:rgba(244,239,231,.85);font-size:15px;letter-spacing:.1em;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .gtile:nth-child(1){grid-column:span 5;grid-row:span 3;background:linear-gradient(150deg,#403628,#1c1814)}
+  .gtile:nth-child(2){grid-column:span 4;grid-row:span 2;background:linear-gradient(150deg,#332d24,#211b15)}
+  .gtile:nth-child(3){grid-column:span 3;grid-row:span 2;background:linear-gradient(150deg,#4a3f2e,#26201a)}
+  .gtile:nth-child(4){grid-column:span 4;grid-row:span 2;background:linear-gradient(150deg,#37301f,#1e1813)}
+  .gtile:nth-child(5){grid-column:span 3;grid-row:span 2;background:linear-gradient(150deg,#453a2a,#231d17)}
+
+  /* ---------- ACCESS ---------- */
+  .access{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,7vw,90px)}
+  .info-block{margin-bottom:34px}
+  .info-block .k{font-size:11px;letter-spacing:.28em;color:var(--brass);text-transform:uppercase;margin-bottom:10px}
+  .info-block .v{font-family:var(--mincho);font-size:clamp(16px,2vw,20px);line-height:1.7}
+  .info-block .v small{font-size:13px;color:var(--stone);font-family:var(--sans)}
+  .map-stub{aspect-ratio:1/1;background:linear-gradient(160deg,#e2d8c7,#cbbfa9);position:relative;border:1px solid var(--line)}
+  .map-stub::before{content:"MAP";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--serif);letter-spacing:.4em;color:rgba(28,24,20,.4)}
+  .map-stub .pin{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:var(--brass);transform:translate(-50%,-50%);box-shadow:0 0 0 8px rgba(156,126,79,.25)}
+
+  /* ---------- CTA ---------- */
+  .cta{background:var(--ink);color:var(--paper);text-align:center}
+  .cta h2{font-family:var(--mincho);font-weight:400;font-size:clamp(26px,4vw,46px);line-height:1.6;margin-bottom:14px}
+  .cta .en{font-family:var(--serif);font-style:italic;color:var(--brass-lt);font-size:clamp(18px,2.4vw,26px);margin-bottom:42px;letter-spacing:.04em}
+  .btn{display:inline-flex;align-items:center;gap:14px;border:1px solid var(--brass-lt);color:var(--paper);padding:18px 44px;border-radius:50px;font-size:12px;letter-spacing:.24em;text-transform:uppercase;transition:.5s;position:relative;overflow:hidden}
+  .btn span{position:relative;z-index:1;transition:color .5s}
+  .btn::before{content:"";position:absolute;inset:0;background:var(--brass-lt);transform:translateY(101%);transition:transform .5s cubic-bezier(.16,1,.3,1)}
+  .btn:hover::before{transform:translateY(0)}
+  .btn:hover span{color:var(--ink)}
+
+  /* ---------- FOOTER ---------- */
+  footer{background:var(--ink);color:rgba(244,239,231,.6);padding:48px clamp(20px,5vw,64px);border-top:1px solid var(--line-lt);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;font-size:11px;letter-spacing:.16em}
+  footer .brand{font-size:22px;color:var(--paper)}
+  footer .socials{display:flex;gap:24px}
+  footer .socials a:hover{color:var(--brass-lt)}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:880px){
+    nav ul{position:fixed;inset:0;background:var(--ink);color:var(--paper);flex-direction:column;justify-content:center;gap:34px;transform:translateX(100%);transition:transform .6s cubic-bezier(.16,1,.3,1)}
+    nav ul.open{transform:none}
+    nav a{font-size:15px}
+    .burger{display:flex;z-index:101}
+    header.solid .burger span,.burger span{background:currentColor}
+    .menu-open header{mix-blend-mode:normal;color:#fff}
+    .hero-grid{grid-template-columns:1fr}
+    .hero-vert{display:none}
+    .concept,.access{grid-template-columns:1fr}
+    .stylist-grid{grid-template-columns:1fr}
+    .stylist .ph{aspect-ratio:16/10}
+    .gallery-grid{grid-template-columns:repeat(6,1fr);grid-auto-rows:90px}
+    .gtile:nth-child(1){grid-column:span 6;grid-row:span 3}
+    .gtile:nth-child(n+2){grid-column:span 3;grid-row:span 2}
+  }
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <a class="brand" href="./" aria-label="トップへ戻る">boole</a>
+  <nav>
+    <ul id="navmenu">
+      <li><a href="./">Top</a></li>
+      <li><a href="#concept">Concept</a></li>
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#stylist">Stylist</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#access">Access</a></li>
+      <li><a href="#reserve" class="nav-reserve">予約する</a></li>
+    </ul>
+    <button class="burger" id="burger" aria-label="menu"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-label" id="hl">大和市中央 ｜ HAIR SALON BOOLE</div>
+      <h1 id="title" aria-label="boole">
+        <span class="ch">b</span><span class="ch">o</span><span class="ch">o</span><span class="ch">l</span><span class="ch">e</span>
+      </h1>
+      <p class="hero-sub" id="hs">髪と、静かに向き合う時間を。</p>
+      <p class="hero-en" id="he">HAIR SALON BOOLE — YAMATO, KANAGAWA</p>
+    </div>
+    <div class="hero-vert" id="hv">大和駅より徒歩三分、地下のサロン</div>
+  </div>
+  <div class="scroll-cue"><span class="ln"></span>SCROLL</div>
+</section>
+
+<!-- CONCEPT -->
+<section id="concept">
+  <div class="concept">
+    <div class="concept-text reveal">
+      <div class="eyebrow"><span class="num">01</span><span class="bar"></span>Concept</div>
+      <h2 class="sec">ことばにならない、<br>美しさへ。<span class="en">Beauty beyond words</span></h2>
+      <p class="lead">流行を追うのではなく、その人だけの輪郭をすくいとる。boole は、髪を通してあなたの「らしさ」に静かに寄り添うサロンです。</p>
+      <p>白を基調とした落ち着いた空間で、担当のスタイリストがカウンセリングから仕上げまで。骨格・髪質・生活のリズムまで読み取りながら、再現性のあるスタイルを設計します。</p>
+      <p>大和の街の喧騒から少し離れた場所で、髪と向き合う時間そのものを、上質なひとときに。</p>
+    </div>
+    <div class="concept-visual reveal">
+      <div class="frame">
+        <span class="vlabel">静寂のなかで</span>
+        <span class="mark">b.</span>
+      </div>
+      <div class="tag">Yamato</div>
+    </div>
+  </div>
+</section>
+
+<!-- MENU -->
+<section id="menu" class="menu-sec">
+  <div class="reveal">
+    <div class="eyebrow"><span class="num">02</span><span class="bar"></span>Menu</div>
+    <h2 class="sec">メニュー<span class="en">Price list</span></h2>
+  </div>
+  <div class="menu-list reveal">
+    <div class="menu-row"><span class="idx">01</span><span class="name">カット<small>CUT</small></span><span class="price">¥3,420<span>〜</span></span></div>
+    <div class="menu-row"><span class="idx">02</span><span class="name">メンズカット ＆ スキャルプシャンプー<small>MEN'S CUT &amp; SCALP SHAMPOO</small></span><span class="price">¥3,630<span>税込</span></span></div>
+    <div class="menu-row"><span class="idx">03</span><span class="name">カット ＆ カラー<small>CUT &amp; COLOR</small></span><span class="price">¥6,600<span>税込</span></span></div>
+    <div class="menu-row"><span class="idx">04</span><span class="name">カット ＆ カラー ＆ トリートメント<small>CUT &amp; COLOR &amp; TREATMENT</small></span><span class="price">¥8,800<span>税込</span></span></div>
+    <div class="menu-row"><span class="idx">05</span><span class="name">カット ＆ デジタルパーマ ＆ トリートメント<small>CUT &amp; DIGITAL PERM &amp; TREATMENT</small></span><span class="price">¥11,000<span>税込</span></span></div>
+  </div>
+  <p class="menu-note">※価格はすべて目安です。髪の長さ・状態により変動する場合がございます。詳細はカウンセリング時にご案内いたします。</p>
+</section>
+
+<!-- STYLIST -->
+<section id="stylist">
+  <div class="reveal">
+    <div class="eyebrow"><span class="num">03</span><span class="bar"></span>Stylist</div>
+    <h2 class="sec">スタイリスト<span class="en">The hands behind boole</span></h2>
+  </div>
+  <div class="stylist-grid">
+    <div class="stylist reveal">
+      <div class="ph"></div>
+      <div class="role">Owner</div>
+      <div class="nm">渡邊 暁史<span class="en">Gyoshi Watanabe</span></div>
+      <p>経歴17年。くせ毛やボリュームの悩みに、骨格と質感から似合わせを設計する。</p>
+    </div>
+    <div class="stylist reveal">
+      <div class="ph"></div>
+      <div class="role">Salon Director</div>
+      <div class="nm">和田 康一<span class="en">Koichi Wada</span></div>
+      <p>経歴17年。自然体で話しやすく、再現性のあるスタイルとヘアセットを得意とする。</p>
+    </div>
+    <div class="stylist reveal">
+      <div class="ph"></div>
+      <div class="role">Assistant</div>
+      <div class="nm">角田 亜美<span class="en">Ami Tsunoda</span></div>
+      <p>柔らかな人柄で、ティーンズやガーリーなスタイル、ヘアセットを担当する。</p>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery" class="gallery-sec">
+  <div class="reveal">
+    <div class="eyebrow"><span class="num">04</span><span class="bar"></span>Gallery</div>
+    <h2 class="sec">スタイル集<span class="en">Selected works</span></h2>
+  </div>
+  <div class="gallery-grid reveal">
+    <div class="gtile" data-l="effortless"><img src="./gallery/1.jpg" alt="boole スタイル写真 1" loading="lazy"></div>
+    <div class="gtile" data-l="natural"><img src="./gallery/2.jpg" alt="boole スタイル写真 2" loading="lazy"></div>
+    <div class="gtile" data-l="elegant"><img src="./gallery/3.jpg" alt="boole スタイル写真 3" loading="lazy"></div>
+    <div class="gtile" data-l="textured"><img src="./gallery/4.jpg" alt="boole スタイル写真 4" loading="lazy"></div>
+    <div class="gtile" data-l="airy"><img src="./gallery/5.jpg" alt="boole スタイル写真 5" loading="lazy"></div>
+  </div>
+</section>
+
+<!-- ACCESS -->
+<section id="access">
+  <div class="access">
+    <div class="reveal">
+      <div class="eyebrow"><span class="num">05</span><span class="bar"></span>Access</div>
+      <h2 class="sec">店舗情報<span class="en">Information</span></h2>
+      <div class="info-block">
+        <div class="k">Address</div>
+        <div class="v">〒242-0021<br>神奈川県大和市中央 1-4-17 第22アルカディアビル B1F<br><small>小田急江ノ島線・相鉄本線「大和駅」より徒歩3分</small></div>
+      </div>
+      <div class="info-block">
+        <div class="k">Open</div>
+        <div class="v">9:00 – 21:00<br><small>カット最終受付 20:00 / カラー 19:30 / パーマ 19:00</small></div>
+      </div>
+      <div class="info-block">
+        <div class="k">Closed</div>
+        <div class="v">毎週水曜日・第2／第4月曜日</div>
+      </div>
+      <div class="info-block">
+        <div class="k">Seats</div>
+        <div class="v">セット面 8席</div>
+      </div>
+      <div class="info-block">
+        <div class="k">Reservation</div>
+        <div class="v"><a href="https://beauty.hotpepper.jp/slnH000429621/" target="_blank" rel="noopener">Hot Pepper Beauty より承ります</a></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <a class="map-stub" style="display:block" href="https://www.google.com/maps/search/?api=1&query=%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E5%A4%A7%E5%92%8C%E5%B8%82%E4%B8%AD%E5%A4%AE1-4-17%20%E7%AC%AC22%E3%82%A2%E3%83%AB%E3%82%AB%E3%83%87%E3%82%A3%E3%82%A2%E3%83%93%E3%83%AB" target="_blank" rel="noopener" aria-label="Google マップで boole を開く"><span class="pin"></span></a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="reserve" class="cta">
+  <div class="reveal">
+    <h2>その人だけの美しさを、<br>ここから。</h2>
+    <div class="en">Book your time</div>
+    <a href="https://beauty.hotpepper.jp/slnH000429621/" target="_blank" rel="noopener" class="btn"><span>ご予約はこちら →</span></a>
+  </div>
+</section>
+
+<footer>
+  <a class="brand" href="./">boole</a>
+  <div class="socials">
+    <a href="https://www.instagram.com/boole___/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://beauty.hotpepper.jp/slnH000429621/" target="_blank" rel="noopener">Hot Pepper</a>
+  </div>
+  <div>© 2026 Hair Salon boole, Yamato</div>
+</footer>
+
+<script>
+  // nav solidify
+  const hdr=document.getElementById('hdr');
+  addEventListener('scroll',()=>hdr.classList.toggle('solid',scrollY>40));
+
+  // mobile menu
+  const burger=document.getElementById('burger');
+  const navmenu=document.getElementById('navmenu');
+  burger.addEventListener('click',()=>{
+    navmenu.classList.toggle('open');
+    document.body.classList.toggle('menu-open');
+  });
+  navmenu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
+    navmenu.classList.remove('open');document.body.classList.remove('menu-open');
+  }));
+
+  // hero entrance
+  addEventListener('load',()=>{
+    document.querySelectorAll('.hero h1 .ch').forEach((c,i)=>{
+      c.style.transition='opacity 1s ease '+(0.25+i*0.09)+'s, transform 1.1s cubic-bezier(.16,1,.3,1) '+(0.25+i*0.09)+'s';
+      requestAnimationFrame(()=>{c.style.opacity=1;c.style.transform='none'});
+    });
+    const fade=(el,d)=>{el.style.transition='opacity 1.2s ease '+d+'s';requestAnimationFrame(()=>el.style.opacity=1)};
+    fade(document.getElementById('hl'),.1);
+    fade(document.getElementById('hs'),.85);
+    fade(document.getElementById('he'),1.0);
+    fade(document.getElementById('hv'),1.2);
+  });
+
+  // scroll reveal
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
+  },{threshold:.16});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
