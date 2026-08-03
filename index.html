@@ -115,6 +115,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -191,11 +192,13 @@ function boot(){
   const woodTex = makeWoodTexture();
 
   let lampPivot = null, bulbMat = null, lampBaseRot = 0;
+  let bulbMesh = null, glowCore = null, glowHalo = null;   // 電球のグロー（疑似ブルーム）
   let R = 1, center = new THREE.Vector3();
   let controls = null, updateHud = null;     // ?tune モード用
 
   let boardMesh = null;
   const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
   loader.load('./assets/diorama.glb',
     (gltf)=>{
       const model = gltf.scene;
@@ -211,13 +214,13 @@ function boot(){
         // 黒板はテクスチャ未収録 → 設計トークンの暗い緑黒を手で与える（映り込みも抑える）
         if(mn === 'M_Chalkboard'){ m.color.setHex(0x2c3830); m.roughness = 0.98; m.metalness = 0; m.envMapIntensity = 0.10; boardMesh = o; }
         if(mn === 'M_Wall'){ m.envMapIntensity = 0.5; }
-        if(mn === 'M_Floor'){ m.color.setHex(0xf7f6f3); m.envMapIntensity = 0.35; }
-        // カウンター本体 → 明るいグレージュ縦木目（天板 M_CounterTop は白のまま）
-        if(mn === 'M_Counter'){ m.map = woodTex; m.color.setHex(0xffffff); m.roughness = 0.45; m.needsUpdate = true; }
+        if(mn === 'M_Floor'){ o.visible = false; }   // ベイクの床に差し替えるため隠す
+        // カウンターはベイクの木目に差し替えるため隠す（本体・天板とも）
+        if(mn === 'M_Counter' || mn === 'M_CounterTop'){ o.visible = false; }
         // 発光（土台の光のライン・電球）を少し持ち上げる
         if(m && m.emissive && (m.emissiveIntensity !== undefined)){
           if(mn === 'M_Glow') m.emissiveIntensity = 3.0;
-          if(mn === 'M_LampBulb'){ m.emissiveIntensity = 2.2; bulbMat = m; }
+          if(mn === 'M_LampBulb'){ m.emissiveIntensity = 2.2; bulbMat = m; bulbMesh = o; }
         }
       });
 
@@ -283,6 +286,23 @@ function boot(){
       lampPivot = model.getObjectByName('Lamp');
       if(lampPivot) lampBaseRot = lampPivot.rotation.z;
 
+      // 電球のグロー：加算ブレンドの疑似ブルーム。透過を壊さず電球だけ"灯る"。
+      // 白壁を滲ませないよう全画面Bloomは使わず、電球の世界座標にsprite2枚（芯＋暈し）を置く。
+      if(bulbMesh){
+        bulbMesh.updateWorldMatrix(true, false);
+        const wp = new THREE.Vector3().setFromMatrixPosition(bulbMesh.matrixWorld);
+        const glowTex = makeGlowTexture();
+        const mk = (op, sc)=>{
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+            map:glowTex, color:0xffe7c4, blending:THREE.AdditiveBlending,
+            transparent:true, depthWrite:false, depthTest:false, opacity:op, toneMapped:false }));
+          sp.scale.setScalar(sc); sp.position.copy(wp); sp.renderOrder = 4; return sp;
+        };
+        glowHalo = mk(0.45, R*0.205);   // 広く柔らかい暈し
+        glowCore = mk(0.85, R*0.055);   // 中心の明るい芯
+        scene.add(glowHalo); scene.add(glowCore);
+      }
+
       loaderEl.classList.add('hide');
       reveal();
       chalk.start();
@@ -291,6 +311,16 @@ function boot(){
     undefined,
     (err)=>{ console.error(err); fallback(); }
   );
+
+  // ---- ベイク版のタイル床＋木目カウンターを重ねる（realtimeのM_Floor/M_Counter/M_CounterTopは隠す）----
+  // ベイクのGI・タイル・木目が焼かれた面。emissiveなのでライト非依存＝AgXで出る。
+  // offset Y=-1.953：baked床ローカルY0.6→realtime床面world-1.353、カウンター天板Y1.7→-0.253も同時に整合。
+  new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('./assets/floor_counter_opt.glb', (g)=>{
+    const f = g.scene;
+    f.position.set(0, -1.953, 0);
+    f.traverse(o=>{ if(o.isMesh){ o.renderOrder = 0; o.receiveShadow = false; o.castShadow = false; } });
+    scene.add(f);
+  });
 
   function frameCamera(){
     camera.aspect = innerWidth / innerHeight;
@@ -351,6 +381,12 @@ function boot(){
     if(bulbMat && !reduceMotion){
       bulbMat.emissiveIntensity = 2.2 + Math.sin(t*2.3)*0.12 + Math.sin(t*7.1)*0.05;
     }
+    // グローも電球の明滅に同期（ごく僅か。静止に近い"気配"）
+    if(glowCore){
+      const k = reduceMotion ? 1 : (1 + Math.sin(t*2.3)*0.07 + Math.sin(t*7.1)*0.03);
+      glowCore.material.opacity = 0.85 * k;
+      glowHalo.material.opacity = 0.45 * k;
+    }
 
     chalk.update(performance.now());
     renderer.render(scene, camera);
@@ -371,6 +407,19 @@ function boot(){
    カウンターのグレージュ縦木目テクスチャ（手続き生成）
    Blenderの Noise+Wave(BANDS)→低コントラスト暖灰 を canvas で近似
    ===================================================================== */
+/* 電球グロー用の放射状テクスチャ（中心=暖白→外周=透明） */
+function makeGlowTexture(){
+  const s = 128, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const x = cv.getContext('2d');
+  const g = x.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  g.addColorStop(0.00, 'rgba(255,255,255,1)');
+  g.addColorStop(0.18, 'rgba(255,246,228,0.90)');
+  g.addColorStop(0.45, 'rgba(255,238,210,0.35)');
+  g.addColorStop(1.00, 'rgba(255,236,205,0)');
+  x.fillStyle = g; x.fillRect(0, 0, s, s);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
 function makeWoodTexture(){
   function hash(x,y){ const s=Math.sin(x*127.1+y*311.7)*43758.5453; return s-Math.floor(s); }
   function vnoise(x,y){
