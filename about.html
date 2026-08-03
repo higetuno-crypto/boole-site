@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>boole ｜ 大和市中央のヘアサロン</title>
-<meta name="description" content="神奈川県大和市中央のヘアサロン boole（ブール）。大和駅から徒歩3分。髪と静かに向き合う時間を。">
+<title>BOOLE ｜ 大和市中央のヘアサロン</title>
+<meta name="description" content="神奈川県大和市中央のヘアサロン BOOLE（ブール）。大和駅から徒歩3分。髪と静かに向き合う時間を。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Shippori+Mincho+B1:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap" rel="stylesheet">
@@ -64,7 +64,9 @@
   nav a:hover::after{width:100%}
   .nav-reserve{border:1px solid currentColor;padding:9px 20px;border-radius:40px;font-size:10px}
   .nav-reserve::after{display:none}
-  .burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:0}
+  /* color:inherit が無いと <button> は color を継承せずブラウザ既定色になり、
+     下の span の currentColor が暗くなって difference 合成の暗いヒーロー上で消える。 */
+  .burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:0;color:inherit}
   .burger span{width:24px;height:1px;background:currentColor;display:block;transition:.4s}
 
   /* ---------- HERO ---------- */
@@ -222,7 +224,7 @@
 <body>
 
 <header id="hdr">
-  <a class="brand" href="./" aria-label="トップへ戻る">boole</a>
+  <a class="brand" href="./" aria-label="トップへ戻る">BOOLE</a>
   <nav>
     <ul id="navmenu">
       <li><a href="./">Top</a></li>
@@ -241,12 +243,12 @@
 <section class="hero">
   <div class="hero-grid">
     <div>
-      <div class="hero-label" id="hl">大和市中央 ｜ HAIR SALON boole</div>
-      <h1 id="title" aria-label="boole">
-        <span class="ch">b</span><span class="ch">o</span><span class="ch">o</span><span class="ch">l</span><span class="ch">e</span>
+      <div class="hero-label" id="hl">大和市中央 ｜ HAIR SALON BOOLE</div>
+      <h1 id="title" aria-label="BOOLE">
+        <span class="ch">B</span><span class="ch">O</span><span class="ch">O</span><span class="ch">L</span><span class="ch">E</span>
       </h1>
       <p class="hero-sub" id="hs">髪と、静かに向き合う時間を。</p>
-      <p class="hero-en" id="he">HAIR SALON boole — YAMATO, KANAGAWA</p>
+      <p class="hero-en" id="he">HAIR SALON BOOLE — YAMATO, KANAGAWA</p>
     </div>
     <div class="hero-vert" id="hv">大和駅より徒歩三分、地下のサロン</div>
   </div>
@@ -259,7 +261,7 @@
     <div class="concept-text reveal">
       <div class="eyebrow"><span class="num">01</span><span class="bar"></span>Concept</div>
       <h2 class="sec">ことばにならない、<br>美しさへ。<span class="en">Beauty beyond words</span></h2>
-      <p class="lead">流行を追うのではなく、その人だけの輪郭をすくいとる。boole は、髪を通してあなたの「らしさ」に静かに寄り添うサロンです。</p>
+      <p class="lead">流行を追うのではなく、その人だけの輪郭をすくいとる。BOOLE は、髪を通してあなたの「らしさ」に静かに寄り添うサロンです。</p>
       <p>白を基調とした落ち着いた空間で、担当のスタイリストがカウンセリングから仕上げまで。骨格・髪質・生活のリズムまで読み取りながら、再現性のあるスタイルを設計します。</p>
       <p>大和の街の喧騒から少し離れた場所で、髪と向き合う時間そのものを、上質なひとときに。</p>
     </div>
@@ -293,17 +295,17 @@
 <section id="stylist">
   <div class="reveal">
     <div class="eyebrow"><span class="num">03</span><span class="bar"></span>Stylist</div>
-    <h2 class="sec">スタイリスト<span class="en">The hands behind boole</span></h2>
+    <h2 class="sec">スタイリスト<span class="en">The hands behind BOOLE</span></h2>
   </div>
   <div class="stylist-grid">
     <div class="stylist reveal">
-      <div class="ph has-photo"><img src="./staff/watanabe.jpg" alt="カットをする boole オーナー 渡邊 暁史" width="800" height="1000" loading="lazy"></div>
+      <div class="ph has-photo"><img src="./staff/watanabe.jpg" alt="カットをする BOOLE オーナー 渡邊 暁史" width="800" height="1000" loading="lazy"></div>
       <div class="role">Owner</div>
       <div class="nm">渡邊 暁史<span class="en">Gyoshi Watanabe</span></div>
       <p>経歴17年。くせ毛やボリュームの悩みに、骨格と質感から似合わせを設計する。</p>
     </div>
     <div class="stylist reveal">
-      <div class="ph has-photo"><img src="./staff/wada.jpg" alt="ブローをする boole サロンディレクター 和田 康一" width="800" height="1000" loading="lazy"></div>
+      <div class="ph has-photo"><img src="./staff/wada.jpg" alt="ブローをする BOOLE サロンディレクター 和田 康一" width="800" height="1000" loading="lazy"></div>
       <div class="role">Salon Director</div>
       <div class="nm">和田 康一<span class="en">Koichi Wada</span></div>
       <p>経歴17年。自然体で話しやすく、再現性のあるスタイルとヘアセットを得意とする。</p>
@@ -327,11 +329,11 @@
     <h2 class="sec">スタイル集<span class="en">Selected works</span></h2>
   </div>
   <div class="gallery-grid reveal">
-    <div class="gtile" data-l="effortless"><img src="./gallery/1.jpg" alt="boole スタイル写真 1" loading="lazy"></div>
-    <div class="gtile" data-l="natural"><img src="./gallery/2.jpg" alt="boole スタイル写真 2" loading="lazy"></div>
-    <div class="gtile" data-l="elegant"><img src="./gallery/3.jpg" alt="boole スタイル写真 3" loading="lazy"></div>
-    <div class="gtile" data-l="textured"><img src="./gallery/4.jpg" alt="boole スタイル写真 4" loading="lazy"></div>
-    <div class="gtile" data-l="airy"><img src="./gallery/5.jpg" alt="boole スタイル写真 5" loading="lazy"></div>
+    <div class="gtile" data-l="effortless"><img src="./gallery/1.jpg" alt="BOOLE スタイル写真 1" loading="lazy"></div>
+    <div class="gtile" data-l="natural"><img src="./gallery/2.jpg" alt="BOOLE スタイル写真 2" loading="lazy"></div>
+    <div class="gtile" data-l="elegant"><img src="./gallery/3.jpg" alt="BOOLE スタイル写真 3" loading="lazy"></div>
+    <div class="gtile" data-l="textured"><img src="./gallery/4.jpg" alt="BOOLE スタイル写真 4" loading="lazy"></div>
+    <div class="gtile" data-l="airy"><img src="./gallery/5.jpg" alt="BOOLE スタイル写真 5" loading="lazy"></div>
   </div>
 </section>
 
@@ -365,7 +367,7 @@
     <div class="reveal">
       <div class="map">
         <!-- 住所文字列だと大和市内の別地点にジオコーディングされるため座標で指定。座標は Hot Pepper Beauty の店舗ページ由来。 -->
-        <iframe src="https://maps.google.com/maps?q=35.467647,139.460882&z=17&hl=ja&output=embed" title="boole の地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <iframe src="https://maps.google.com/maps?q=35.467647,139.460882&z=17&hl=ja&output=embed" title="BOOLE の地図" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         <span class="pin"></span>
       </div>
       <a class="map-link" href="https://www.google.com/maps/search/?api=1&query=35.467647%2C139.460882" target="_blank" rel="noopener">Google マップで開く</a>
@@ -383,12 +385,12 @@
 </section>
 
 <footer>
-  <a class="brand" href="./">boole</a>
+  <a class="brand" href="./">BOOLE</a>
   <div class="socials">
     <a href="https://www.instagram.com/boole___/" target="_blank" rel="noopener">Instagram</a>
     <a href="https://beauty.hotpepper.jp/slnH000429621/" target="_blank" rel="noopener">Hot Pepper</a>
   </div>
-  <div>© 2026 Hair Salon boole, Yamato</div>
+  <div>© 2026 Hair Salon BOOLE, Yamato</div>
 </footer>
 
 <script>
